@@ -4,7 +4,9 @@ const website = require("../controllers/web.controller");
 const router = express.Router();
 
 router.route("/")
-    .get(website.findAll);
+    .get(website.findAll)
+    .post(website.create)
+    .delete(website.delete);
 
 router.route("/order")
     .post(website.create);
