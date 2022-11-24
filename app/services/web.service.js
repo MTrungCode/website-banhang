@@ -4,7 +4,7 @@ class WebService {
     constructor(client) {
         this.Product = client.db().collection('products');
     }
-    extractProductData(payload) {
+extractProductData(payload) {
         const product = {
             title: payload.title,
             description: payload.description,
@@ -14,7 +14,7 @@ class WebService {
             favorite: payload.favorite,
         };
 
-        Objects.keys(product).forEach(
+        Object.keys(product).forEach(
             (key) => product[key] === undefined && delete product[key]    
         );
         return product;
@@ -22,7 +22,6 @@ class WebService {
 
     async create(payload) {
         const product = this.extractProductData(payload);
-        console.log(product);
         const result = await this.Product.findOneAndUpdate(
             product,
             {  $set: { favorite: product.favorite === true } },
