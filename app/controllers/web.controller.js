@@ -30,26 +30,106 @@ exports.create = async (req, res, next) => {
     }
 };
 
-exports.findAll = (req, res) => {
-    res.send({ message: "findAll" });
+exports.findAll = async (req, res, next) => {
+    let documents = [];
+
+    try {
+        const webService = new WebService(MongoDB.client);
+        const { name } = req.query;
+        if (name) {
+            documents = await webService.findByName(name);
+        } else {
+            documents = await webService.find({});
+        }
+    } catch (error) {
+        return next(
+            new ApiError(500, "An error occurred while retrieving products")
+        );
+    }
+
+    return res.send(documents);
 };
 
-exports.findOne = (req, res) => {
-    res.send({ message: "findOne" });
+exports.findOne = async (req, res, next) => {
+    try {
+        const webService = new WebService(MongoDB.client);
+        const document = await webService.findById(req.params.id);
+        if (!document) {
+            return next(new ApiError(404, "Product not found"));
+        }
+    } catch (error) {
+        return next(
+            new ApiError(
+                500,
+                `Error retrieving product with id=${req.params.id}`
+            )
+        );
+    }
 };
 
-exports.update = (req, res) => {
-    res.send({ message: "update" });
+exports.update = async (req, res, next) => {
+    if (Object.keys(req.body).length === 0) {
+        return next(new ApiError(404, "Data to update can not be empty"));
+    }
+
+    try {
+        const webService = new WebService(MongoDB.client);
+        const document = await webService.update(req.params.id, req.body);
+        if (!document) {
+            return next(new ApiError(404, "Product not found"));
+        }
+
+        return res.send({ message: "Product was updated successfully" });
+    } catch (error) {
+        return next(
+            new ApiError(500, `Error updating product with id=${req.params.id}`)
+        );
+    }
 };
 
-exports.delete = (req, res) => {
-    res.send({ message: "delete" });
+exports.delete = async (req, res, next) => {
+    try {
+        const webService = new WebService(MongoDB.client);
+        const document = await webService.delete(req.params.id);
+        if (!document) {
+            return next(new ApiError(404, "Product not found"));
+        }
+        return res.send({ message: "Product was deleted successfully" });
+    } catch (error) {
+        return next(
+            new ApiError(
+                500,
+                `Could not delete product with id=${req.params.id}`)
+        );
+    }
 };
 
-exports.deleteAll = (req, res) => {
-    res.send({ message: "deleteAll" });
+exports.deleteAllFavor = async (req, res, next) => {
+    try {
+        const webService = new WebService(MongoDB.client);
+        const document = await webService.deleteAllFavor();
+        return res.send({
+            message: `${deletedCount} products were deleted successfully`,
+        });
+    } catch (error) {
+        return next(
+            new ApiError(500, "An error occurred while removing all favorite products"
+            )
+        );
+    }
 };
 
-exports.findAllFavorite = (req, res) => {
-    res.send({ message: "findAllFavorite" });
+exports.findAllFavorite = async (req, res, next) => {
+    try {
+        const webService = new WebService(MongoDB.client);
+        const documents = await webService.findFavorite();
+        return res.send(documents);
+    } catch (error) {
+        return next(
+            new ApiError(
+                500,
+                "An error occurred while retrieving favorite products"
+            )
+        );
+    }
 };

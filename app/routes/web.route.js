@@ -6,14 +6,7 @@ const router = express.Router();
 router.route("/")
     .get(website.findAll)
     .post(website.create)
-    .delete(website.delete);
-
-router.route("/order")
-    .post(website.create);
-
-router.route("/cart")
-    .put(website.update)
-    .delete(website.delete);    
+    .delete(website.delete);  
 
 router.route("/favorite")
     .get(website.findAllFavorite)
