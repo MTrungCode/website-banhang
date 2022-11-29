@@ -3,10 +3,11 @@ const { ObjectId } = require("mongodb");
 class WebService {
     constructor(client) {
         this.Product = client.db().collection('products');
+        this.User = client.db().collection('users');
     }
-extractProductData(payload) {
+    extractProductData(payload) {
         const product = {
-            title: payload.title,
+            name: payload.name,
             description: payload.description,
             thumbar: payload.thumbar,
             ingredients: payload.ingredients,
@@ -20,6 +21,22 @@ extractProductData(payload) {
         return product;
     }
 
+    extractUserDataSignup(payload) {
+        const user = {
+            name: payload.name,
+            email: payload.email,
+            address: payload.address,
+            phone: payload.phone,
+            password: payload.password,    
+            favorite: payload.favorite,        
+        };
+
+        Object.keys(user).forEach(
+            (key) => user[key] === undefined && delete user[key]    
+        );
+        return user;
+    }
+
     async create(payload) {
         const product = this.extractProductData(payload);
         const result = await this.Product.findOneAndUpdate(
@@ -28,6 +45,21 @@ extractProductData(payload) {
             { returnDocument: "after", upsert: true }
         );
         return result.value;
+    }
+
+    async signup(payload) {
+        const user = this.extractUserDataSignup(payload);
+        const result = await this.User.findOneAndUpdate(
+            user,
+            {  $set: { favorite: user.favorite === true } },
+            { returnDocument: "after", upsert: true }
+        );        
+        return result.value;
+    }
+
+    async findUser(filter) {
+        const cursor = await this.User.find(filter);
+        return await cursor.toArray();
     }
 
     async find(filter) {

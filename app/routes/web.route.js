@@ -8,13 +8,15 @@ router.route("/")
     .post(website.create)
     .delete(website.delete);  
 
-router.route("/favorite")
-    .get(website.findAllFavorite)
-    .delete(website.delete);
-
 router.route("/:id")
     .get(website.findOne)
     .put(website.update)
     .delete(website.delete);
+
+router.route("/login")
+    .post(website.login);
+
+router.route("/signup")
+    .post(website.signup)
 
 module.exports = router;

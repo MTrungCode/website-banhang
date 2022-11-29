@@ -1,10 +1,11 @@
 const WebService = require("../services/web.service");
 const ApiError = require("../api-error");
 const MongoDB = require("../utils/mongodb.util");
+const Bcrypt = require('bcryptjs');
 
 exports.create = async (req, res, next) => {
-    if (!req.body?.title) {
-        return next(new ApiError(400, "Title can not be empty"));
+    if (!req.body?.name) {
+        return next(new ApiError(400, "Name can not be empty"));
     }
     if (!req.body?.description) {
         return next(new ApiError(400, "Description can not be empty"));
@@ -26,6 +27,64 @@ exports.create = async (req, res, next) => {
     } catch (error) {
         return next(
             new ApiError(500, "An error occurred while creating the product")
+        );
+    }
+};
+
+exports.signup = async (req, res, next) => {
+    if (!req.body?.name) {
+        return next(new ApiError(400, "Name can not be empty"));
+    }
+    if (!req.body?.email) {
+        return next(new ApiError(400, "Email can not be empty"));
+    }
+    if (!req.body?.password) {
+        return next(new ApiError(400, "Password can not be empty"));
+    } else if (req.body?.password.length < 8) {
+        return next(new ApiError(400, "Password is at least 8 characters"));
+    }
+    if (!req.body?.confirmPassword) {
+        return next(new ApiError(400, "ConfirmPassword can not be empty"));
+    } else if (req.body?.confirmPassword != req.body?.password) {
+        return next(new ApiError(400, "ConfirmPassword should like password"));
+    }    
+    try {
+        var hashPassword = Bcrypt.hashSync(req.body?.password, 10);
+        req.body.password = hashPassword;
+        const webService = new WebService(MongoDB.client);
+        const document = await webService.signup(req.body);
+        return res.send(document);
+    } catch (error) {
+        return next(
+            new ApiError(500, "An error occurred while registering the user")
+        );
+    }
+};
+
+exports.login = async (req, res, next) => {
+    if (!req.body?.email) {
+        return next(new ApiError(400, "Email can not be empty"));
+    }
+    if (!req.body?.password) {
+        return next(new ApiError(400, "Password can not be empty"));
+    }
+
+    try {
+        const webService = new WebService(MongoDB.client);
+        const document = await webService.findUser({});
+        document.forEach(user => {
+            if (user.email != req.body.email) {
+                return next(new ApiError(400, "Email not exist"));
+            }
+            if (!Bcrypt.compareSync(req.body.password, user.password)) {
+                return next(new ApiError(400, "Password is wrong"));
+            }
+        });
+        return res.send({ message: "Login success" });
+    } catch (error) {
+        console.log(error);
+        return next(
+            new ApiError(500, "An error occurred while loging in")
         );
     }
 };
@@ -100,36 +159,6 @@ exports.delete = async (req, res, next) => {
             new ApiError(
                 500,
                 `Could not delete product with id=${req.params.id}`)
-        );
-    }
-};
-
-exports.deleteAllFavor = async (req, res, next) => {
-    try {
-        const webService = new WebService(MongoDB.client);
-        const document = await webService.deleteAllFavor();
-        return res.send({
-            message: `${deletedCount} products were deleted successfully`,
-        });
-    } catch (error) {
-        return next(
-            new ApiError(500, "An error occurred while removing all favorite products"
-            )
-        );
-    }
-};
-
-exports.findAllFavorite = async (req, res, next) => {
-    try {
-        const webService = new WebService(MongoDB.client);
-        const documents = await webService.findFavorite();
-        return res.send(documents);
-    } catch (error) {
-        return next(
-            new ApiError(
-                500,
-                "An error occurred while retrieving favorite products"
-            )
         );
     }
 };
