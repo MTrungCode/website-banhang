@@ -73,16 +73,17 @@ exports.login = async (req, res, next) => {
         const webService = new WebService(MongoDB.client);
         const document = await webService.findUser({});
         document.forEach(user => {
-            if (user.email != req.body.email) {
-                return next(new ApiError(400, "Email not exist"));
-            }
-            if (!Bcrypt.compareSync(req.body.password, user.password)) {
-                return next(new ApiError(400, "Password is wrong"));
+            if (user.email == req.body.email) {
+                hash = user.password;
+                if (!Bcrypt.compareSync(req.body.password, hash)) {
+                    return res.send(new ApiError(400, "Password is wrong"));
+                } else {
+                    return res.send(user.name);
+                }
             }
         });
-        return res.send({ message: "Login success" });
+        return res.send(new ApiError(400, "Email not exist"));
     } catch (error) {
-        console.log(error);
         return next(
             new ApiError(500, "An error occurred while loging in")
         );
@@ -116,6 +117,7 @@ exports.findOne = async (req, res, next) => {
         if (!document) {
             return next(new ApiError(404, "Product not found"));
         }
+        return res.send(document);
     } catch (error) {
         return next(
             new ApiError(
